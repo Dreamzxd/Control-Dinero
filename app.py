@@ -5,7 +5,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'supersecretkey')
+app.secret_key = os.urandom(24) # para usar en servidor y cada que se reinicia el servidor hay que validar la session
+#app.secret_key = os.environ.get('SECRET_KEY', 'supersecretkey') # para usar en servidor SIN INVALIDACIONES DE SESSION
 
 def obtener_movimientos():
     conn = sqlite3.connect('db.sqlite3')
