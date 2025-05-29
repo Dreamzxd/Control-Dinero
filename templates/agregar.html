@@ -1,0 +1,73 @@
+<!-- templates/agregar.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Agregar Movimiento</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-white shadow-md rounded p-8 max-w-lg w-full">
+    <h1 class="text-2xl font-bold mb-6 text-center text-blue-600">Agregar Movimiento</h1>
+    <form action="/agregar" method="POST" class="space-y-4">
+
+      <div>
+        <label class="block text-gray-700">Fecha:</label>
+        <input type="date" name="fecha" required class="w-full border px-3 py-2 rounded">
+      </div>
+
+      <div>
+        <label class="block text-gray-700">Descripción:</label>
+        <input type="text" name="descripcion" placeholder="Ej: Pago de internet" class="w-full border px-3 py-2 rounded">
+      </div>
+
+      <div>
+        <label class="block text-gray-700">Categoría:</label>
+        <input type="text" name="categoria" placeholder="Ej: Servicios, Comida, Transporte" class="w-full border px-3 py-2 rounded">
+      </div>
+
+      <div>
+        <label class="block text-gray-700">Monto:</label>
+        <input type="text" name="monto" id="monto" required class="w-full border px-3 py-2 rounded" placeholder="0,00">
+      </div>
+
+      <div>
+        <label class="block text-gray-700">Tipo:</label>
+        <select name="tipo" required class="w-full border px-3 py-2 rounded">
+          <option value="Ingreso">Ingreso</option>
+          <option value="Gasto">Gasto</option>
+        </select>
+      </div>
+
+      <div class="flex justify-between mt-6">
+        <a href="/" class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 flex items-center gap-2"><svg xmlns='http://www.w3.org/2000/svg' class='h-5 w-5' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 19l-7-7 7-7'/></svg>Volver</a>
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+          Guardar
+        </button>
+      </div>
+
+    </form>
+  </div>
+  <script>
+    // Formatear el input de monto automáticamente
+    document.addEventListener('DOMContentLoaded', function() {
+      const montoInput = document.getElementById('monto');
+      montoInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\./g, '').replace(/,/g, '.');
+        if (isNaN(value)) return;
+        let partes = value.split('.');
+        let entero = partes[0];
+        let decimal = partes[1] || '';
+        entero = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        if (decimal.length > 2) decimal = decimal.slice(0,2);
+        e.target.value = decimal ? entero + ',' + decimal : entero;
+      });
+      // Al enviar el formulario, convertir a formato numérico estándar
+      montoInput.form.addEventListener('submit', function() {
+        let value = montoInput.value.replace(/\./g, '').replace(/,/g, '.');
+        montoInput.value = value;
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Usuario</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-white shadow-md rounded p-8 max-w-md w-full">
+    <h1 class="text-2xl font-bold mb-6 text-center text-blue-600">Registro</h1>
+    <form action="/register" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-gray-700">Nombre:</label>
+        <input type="text" name="nombre" required class="w-full border px-3 py-2 rounded">
+      </div>
+      <div>
+        <label class="block text-gray-700">Correo electrónico:</label>
+        <input type="email" name="email" required class="w-full border px-3 py-2 rounded">
+      </div>
+      <div>
+        <label class="block text-gray-700">Contraseña:</label>
+        <input type="password" name="password" required class="w-full border px-3 py-2 rounded">
+      </div>
+      <div class="flex justify-between mt-6">
+        <a href="/login" class="text-blue-600 hover:underline">¿Ya tienes cuenta? Inicia sesión</a>
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Registrarse</button>
+      </div>
+    </form>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="mt-4">
+        {% for category, message in messages %}
+          <li class="text-{{ 'red' if category == 'danger' else 'green' }}-600">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+  </div>
+</body>
+</html> 
