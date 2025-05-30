@@ -3,13 +3,56 @@ import sqlite3
 import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+import sys
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24) # para usar en servidor y cada que se reinicia el servidor hay que validar la session
 #app.secret_key = os.environ.get('SECRET_KEY', 'supersecretkey') # para usar en servidor SIN INVALIDACIONES DE SESSION
 
+def get_db_path():
+    if getattr(sys, 'frozen', False):  # Si es ejecutable
+        appdata = os.getenv('APPDATA') or os.path.expanduser('~')
+        data_dir = os.path.join(appdata, 'ControlDinero')
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+        return os.path.join(data_dir, 'db.sqlite3')
+    else:
+        basedir = os.path.abspath(os.path.dirname(__file__))
+        return os.path.join(basedir, 'db.sqlite3')
+
+db_path = get_db_path()
+
+def crear_base_si_no_existe(db_path):
+    if not os.path.exists(db_path):
+        conn = sqlite3.connect(db_path)
+        c = conn.cursor()
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL
+            )
+        ''')
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS movimientos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                fecha TEXT NOT NULL,
+                descripcion TEXT,
+                categoria TEXT,
+                monto REAL NOT NULL,
+                tipo TEXT CHECK(tipo IN ('Ingreso', 'Gasto')) NOT NULL,
+                usuario_id INTEGER NOT NULL,
+                FOREIGN KEY(usuario_id) REFERENCES usuarios(id)
+            )
+        ''')
+        conn.commit()
+        conn.close()
+
+crear_base_si_no_existe(db_path)
+
 def obtener_movimientos():
-    conn = sqlite3.connect('db.sqlite3')
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     user_id = session.get('user_id')
@@ -19,7 +62,7 @@ def obtener_movimientos():
     return movimientos
 
 def calcular_resumen():
-    conn = sqlite3.connect('db.sqlite3')
+    conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     user_id = session.get('user_id')
     cur.execute("SELECT SUM(monto) FROM movimientos WHERE tipo='Ingreso' AND usuario_id = ?", (user_id,))
@@ -47,7 +90,7 @@ def register():
         email = request.form['email']
         password = request.form['password']
         password_hash = generate_password_hash(password)
-        conn = sqlite3.connect('db.sqlite3')
+        conn = sqlite3.connect(db_path)
         cur = conn.cursor()
         try:
             cur.execute("INSERT INTO usuarios (nombre, email, password_hash) VALUES (?, ?, ?)", (nombre, email, password_hash))
@@ -66,7 +109,7 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        conn = sqlite3.connect('db.sqlite3')
+        conn = sqlite3.connect(db_path)
         cur = conn.cursor()
         cur.execute("SELECT id, nombre, password_hash FROM usuarios WHERE email = ?", (email,))
         user = cur.fetchone()
@@ -104,7 +147,7 @@ def agregar():
         tipo = request.form['tipo']
         monto = float(request.form['monto'])
         usuario_id = session.get('user_id')
-        conn = sqlite3.connect('db.sqlite3')
+        conn = sqlite3.connect(db_path)
         cur = conn.cursor()
         cur.execute("INSERT INTO movimientos (fecha, descripcion, categoria, tipo, monto, usuario_id) VALUES (?, ?, ?, ?, ?, ?)",
                     (fecha, descripcion, categoria, tipo, monto, usuario_id))
@@ -123,7 +166,7 @@ def mostrar_eliminar():
 @login_required
 def eliminar(id):
     usuario_id = session.get('user_id')
-    conn = sqlite3.connect('db.sqlite3')
+    conn = sqlite3.connect(db_path)
     cur = conn.cursor()
     cur.execute("DELETE FROM movimientos WHERE id = ? AND usuario_id = ?", (id, usuario_id))
     conn.commit()
